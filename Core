@@ -1,8 +1,8 @@
 #ifndef COFFEE_MAKERS_CORE
 #define COFFEE_MAKERS_CORE
 
-#include<coffee-makers/Matrix_Vector.hpp>
-#include<coffee-makers/compile_time.hpp>
-#include<coffee-makers/Solver.hpp>
+#include<coffee-makers/Containers/Containers.hpp>
+#include<coffee-makers/CompileTimeCalculation/CompileTimeCalculation.hpp>
+#include<coffee-makers/Solver/Solver.hpp>
 
 #endif /* COFFEE_MAKERS_CORE */
