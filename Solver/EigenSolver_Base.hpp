@@ -1,7 +1,7 @@
 #ifndef COFFEE_MAKERS_EIGEN_SOLVER_BASE_HPP
 #define COFFEE_MAKERS_EIGEN_SOLVER_BASE_HPP
-#include<coffee-makers/Containers/FixedMatrix.hpp>
-#include<coffee-makers/Containers/FixedVector.hpp>
+#include<coffee-makers/Containers/Containers.hpp>
+//#include<coffee-makers/CompileTimeCalculation/CompileTimeCalculation.hpp>
 #include<cmath>
 
 
@@ -13,19 +13,26 @@ class EigenSolverBase {
 
 
 	using matrixT = MatT;
-	using scalarT = typename matrixT::element_type;
+	using scalarT = typename matrixT::scalar_type;
 
 
-	static_assert(matrixT::Row_CompileTime == matrixT::Col_CompileTime, "Eigen value decomposition is undefined for a non-regular matrix.");
+//	static_assert(
+//	value_disjunction<
+//		matrixT::Row_CompileTime == matrixT::Col_CompileTime,
+//		(matrixT::Row_CompileTime < 0 || matrixT::Col_CompileTime < 0)>::value,
+//	"Eigen value decomposition is undefined for a non-regular matrix.");
+
 	
-	constexpr static std::size_t dimN = matrixT::Row_CompileTime;
+	constexpr static int dimN = matrixT::Row_CompileTime;
 	
-	using vectorT = FixedVector<scalarT, dimN>;
+	using vectorT = Vector<scalarT, dimN>;
 	
 
 public:
 
-	void solve(const matrixT& target) {static_cast<Method<MatT>&>(this)->solve(target);}
+	void solve(const matrixT& target) {
+		static_cast<Method<MatT>&>(this)->solve(target);
+	}
 
 	matrixT eigen_vectors() const {return static_cast<Method<MatT>&>(this)->eigen_vectors();}
 
@@ -39,8 +46,8 @@ protected:
 
 		bool retval = true;
 
-		for (std::size_t idx = 0; idx < dimN - 1; ++idx)
-			for (std::size_t jdx = idx + 1; jdx < dimN; ++jdx)
+		for (int idx = 0; idx < mat.rows() - 1; ++idx)
+			for (int jdx = idx + 1; jdx < mat.cols(); ++jdx)
 				retval = retval && (std::abs(mat(idx, jdx) / mat(jdx, idx) - 1.) <= relative_tolerance());
 		return retval;
 	}
@@ -52,6 +59,8 @@ protected:
 
 
 private:
+
+	bool isVariable = false;
 
 	template<typename Type, typename DummyType = void>
 	struct Inner_RelativeTolerance;
@@ -134,6 +143,8 @@ typename EigenSolverBase<Method, MatT>::scalarT EigenSolverBase<Method, MatT>::r
 
 template<template<typename> typename Method, typename MatT>
 typename EigenSolverBase<Method, MatT>::scalarT EigenSolverBase<Method, MatT>::absolute_tolerance() {return Inner_AbsoluteTolerance<scalarT>::value;} 
+
+
 }
 
 

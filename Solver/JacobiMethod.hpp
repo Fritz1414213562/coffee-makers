@@ -1,8 +1,8 @@
 #ifndef COFFEE_MAKERS_EIGEN_SOLVER_JACOBI_METHOD_HPP
 #define COFFEE_MAKERS_EIGEN_SOLVER_JACOBI_METHOD_HPP
 #include<coffee-makers/Solver/EigenSolver_Base.hpp>
-#include<coffee-makers/Containers/FixedMatrix.hpp>
-#include<coffee-makers/Containers/FixedVector.hpp>
+#include<coffee-makers/Containers/Containers.hpp>
+#include<coffee-makers/CompileTimeCalculation/matrix_traits.hpp>
 #include<iostream>
 #include<array>
 #include<cmath>
@@ -18,23 +18,32 @@ class JacobiMethod : public EigenSolverBase<JacobiMethod, MatT> {
 public:
 
 	using MatrixType = MatT;
-	using ScalarType = typename MatT::element_type;
+	using ScalarType = typename MatT::scalar_type;
 
 private:
 
 	using scalarT = ScalarType;
 
-	constexpr static std::size_t _row = MatT::Row_CompileTime;
-	constexpr static std::size_t _col = MatT::Col_CompileTime;
+	constexpr static int _dim = MatrixType::Row_CompileTime;
+	using VecT = Vector<scalarT, _dim>;
 
-	constexpr static std::size_t _dim = _row;
-	using VecT = FixedVector<scalarT, _dim>;
-
-	constexpr static std::size_t max_loop = 10000;
+	constexpr static int max_loop = 10000;
 
 
 public:
-	JacobiMethod() = default;	
+	JacobiMethod() {
+		static_assert(not is_variable<MatrixType>::value,
+		"In the case that template Matrix Type is variable, the default constructor of JacobiMethod is forbidden.");
+	}
+	JacobiMethod(const int& dim_runtime) :
+	_eigen_vectors(dim_runtime, dim_runtime),
+	_eigen_values(dim_runtime, 1) {
+
+		if (dim_runtime <= 0)
+			throw std::invalid_argument("Invalid arguments: dim size is not positive");
+	}
+
+
 	~JacobiMethod() = default;
 
 	void solve(const MatT& target);
@@ -44,13 +53,13 @@ public:
 	VecT eigen_values() const {return _eigen_values;}
 
 
-	constexpr static std::size_t Dim = _dim;
+	constexpr static int Dim = _dim;
 
 
 
 private:
 
-	std::pair<std::size_t, std::size_t> max_element(const MatT& target) const;
+	std::pair<int, int> max_element(const MatT& target) const;
 
 	scalarT max_relative_diff(const MatT& lhs, const MatT& rhs) const;
 
@@ -75,15 +84,15 @@ void JacobiMethod<MatT>::solve(const MatT& target) {
 		throw std::invalid_argument("Asymmetric matrix");
 	
 	MatT symm_mat = target;
-	MatT Us;
+	MatT Us(target.rows(), target.cols());
 
-	for (std::size_t idx = 0; idx < _dim; ++idx)
-		for (std::size_t jdx = 0; jdx < _dim; ++jdx)
+	for (int idx = 0; idx < target.rows(); ++idx)
+		for (int jdx = 0; jdx < target.cols(); ++jdx)
 			Us(idx, jdx) = (idx == jdx) ? 1. : 0.;
 	
-	std::size_t loop = 0;
+	int loop = 0;
 	for (; loop < max_loop; ++loop) {
-		const std::pair<std::size_t, std::size_t>& elem_index = this->max_element(symm_mat);
+		const std::pair<int, int>& elem_index = this->max_element(symm_mat);
 		if (std::abs(symm_mat(elem_index.first, elem_index.second)) < this->absolute_tolerance()) break;
 
 		const scalarT alpha = (
@@ -94,9 +103,9 @@ void JacobiMethod<MatT>::solve(const MatT& target) {
 		const scalarT cos_t = std::sqrt(0.5 + gamma * 0.5);
 		const scalarT sin_t = std::copysign(std::sqrt(0.5 - gamma * 0.5), alpha * beta);
 
-		MatT U;
-		for (std::size_t idx = 0; idx < _dim; ++idx)
-			for (std::size_t jdx = 0; jdx < _dim; ++jdx)
+		MatT U(target.rows(), target.cols());
+		for (int idx = 0; idx < target.rows(); ++idx)
+			for (int jdx = 0; jdx < target.cols(); ++jdx)
 				U(idx, jdx) = (idx == jdx) ? 1. : 0.;
 
 		U(elem_index.first, elem_index.first) = cos_t;
@@ -122,7 +131,7 @@ void JacobiMethod<MatT>::solve(const MatT& target) {
 		throw std::logic_error("cannot solve with the tolerance");
 	
 	_eigen_vectors = Us;
-	for (std::size_t idx = 0; idx < _dim; ++idx)
+	for (int idx = 0; idx < target.rows(); ++idx)
 		_eigen_values[idx] = symm_mat(idx, idx);
 }
 
@@ -130,12 +139,12 @@ void JacobiMethod<MatT>::solve(const MatT& target) {
 
 
 template<typename MatT>
-std::pair<std::size_t, std::size_t> JacobiMethod<MatT>::max_element(const MatT& target) const {
+std::pair<int, int> JacobiMethod<MatT>::max_element(const MatT& target) const {
 	scalarT max_elem = std::abs(target(0, 1));
-	std::pair<std::size_t, std::size_t> retval = std::make_pair(0, 1);
+	std::pair<int, int> retval = std::make_pair(0, 1);
 
-	for (std::size_t idx = 0; idx < _dim - 1; ++idx)
-		for (std::size_t jdx = idx + 1; jdx < _dim; ++jdx)
+	for (int idx = 0; idx < target.rows() - 1; ++idx)
+		for (int jdx = idx + 1; jdx < target.cols(); ++jdx)
 			if (max_elem < std::abs(target(idx, jdx))) {
 				max_elem = std::abs(target(idx, jdx));
 				retval = std::make_pair(idx, jdx);
@@ -147,7 +156,7 @@ std::pair<std::size_t, std::size_t> JacobiMethod<MatT>::max_element(const MatT& 
 template<typename MatT>
 typename JacobiMethod<MatT>::scalarT JacobiMethod<MatT>::max_relative_diff(const MatT& lhs, const MatT& rhs) const {
 	scalarT retval = 0.0;
-	for (std::size_t idx = 0; idx < _dim; ++idx) {
+	for (int idx = 0; idx < lhs.rows(); ++idx) {
 		const scalarT& tmp = std::abs(lhs(idx, idx) / rhs(idx, idx));
 		if (retval < tmp) retval = tmp;
 	}
