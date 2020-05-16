@@ -4,5 +4,6 @@
 #include<coffee-makers/Containers/Containers.hpp>
 #include<coffee-makers/CompileTimeCalculation/CompileTimeCalculation.hpp>
 #include<coffee-makers/Solver/Solver.hpp>
+#include<coffee-makers/utility/utility.hpp>
 
 #endif /* COFFEE_MAKERS_CORE */
