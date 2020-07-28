@@ -44,12 +44,16 @@ protected:
 
 	bool is_symmetric(const matrixT& mat) const {
 
-		bool retval = true;
-
-		for (int idx = 0; idx < mat.rows() - 1; ++idx)
-			for (int jdx = idx + 1; jdx < mat.cols(); ++jdx)
-				retval = retval && (std::abs(mat(idx, jdx) / mat(jdx, idx) - 1.) <= relative_tolerance());
-		return retval;
+		for (int idx = 0; idx < mat.rows() - 1; ++idx) {
+			for (int jdx = idx + 1; jdx < mat.cols(); ++jdx) {
+				if (std::abs(mat(idx, jdx) / mat(jdx, idx) - 1.) > relative_tolerance()) {
+					std::cout << idx << " " << jdx << std::endl;
+					return false;
+				}
+			}
+		}
+//		std::cout << retval << std::endl;
+		return true;
 	}
 
 
