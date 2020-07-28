@@ -3,6 +3,7 @@
 #include<coffee-makers/Solver/EigenSolver_Base.hpp>
 #include<coffee-makers/Containers/Containers.hpp>
 #include<coffee-makers/CompileTimeCalculation/matrix_traits.hpp>
+#include<coffee-makers/utility/sort.hpp>
 #include<iostream>
 #include<array>
 #include<cmath>
@@ -27,12 +28,12 @@ private:
 	constexpr static int _dim = MatrixType::Row_CompileTime;
 	using VecT = Vector<scalarT, _dim>;
 
-	constexpr static int max_loop = 10000;
+	constexpr static int max_loop = 10000000;
 
 
 public:
 	JacobiMethod() {
-		static_assert(not is_variable<MatrixType>::value,
+		static_assert(is_fixed<MatrixType>::value,
 		"In the case that template Matrix Type is variable, the default constructor of JacobiMethod is forbidden.");
 	}
 	JacobiMethod(const int& dim_runtime) :
@@ -130,9 +131,14 @@ void JacobiMethod<MatT>::solve(const MatT& target) {
 	if (loop == max_loop)
 		throw std::logic_error("cannot solve with the tolerance");
 	
-	_eigen_vectors = Us;
+	VecT diagonal_values(target.rows());
 	for (int idx = 0; idx < target.rows(); ++idx)
-		_eigen_values[idx] = symm_mat(idx, idx);
+		diagonal_values[idx] = symm_mat(idx, idx);
+	
+	const makers::Vector<int, _dim>& sort_indices = makers::sort_Indices(diagonal_values);
+
+	_eigen_vectors = makers::sort_Column(Us, sort_indices);
+	_eigen_values = makers::sort_Row(diagonal_values, sort_indices);
 }
 
 
