@@ -92,7 +92,8 @@ template<typename Type>
 struct EigenSolverBase<Method, MatT>::Inner_RelativeTolerance<float, Type> {
 
 	using type = float;
-	constexpr static float value = 1e-5;
+	//constexpr static float value = 1e-5;
+	constexpr static float value = 1e-10;
 
 };
 
@@ -125,7 +126,8 @@ template<typename Type>
 struct EigenSolverBase<Method, MatT>::Inner_AbsoluteTolerance<float, Type> {
 
 	using type = float;
-	constexpr static float value = 1e-5;
+	//constexpr static float value = 1e-5;
+	constexpr static float value = 1e-10;
 
 };
 

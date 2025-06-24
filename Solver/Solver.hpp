@@ -2,6 +2,7 @@
 #define COFFEE_MAKERS_SOLVER_HPP
 // interface
 #include<coffee-makers/Solver/EigenSolver.hpp>
+#include<coffee-makers/Solver/SingularValueSolver.hpp>
 
 
 // calculation methods
@@ -23,6 +24,8 @@ template<typename MatT>
 //using JacobiEigenSolver = EigenSolver<JacobiMethod<MatT>>;
 using JacobiEigenSolver = EigenSolver<JacobiMethod, MatT>;
 
+template<typename MatT>
+using JacobiSVSolver = SingularValueSolver<JacobiMethod, MatT>;
 
 
 }

@@ -201,6 +201,7 @@ Matrix<realT, Row, Col>::Matrix() :
 	_matrix{{}} {
 	static_assert((Row_CompileTime > 0) && (Col_CompileTime > 0),
 	"In the case that 'makers::Matrix' is variable, the default constructor is forbidden.");
+	_matrix.fill(0);
 }
 
 
@@ -259,6 +260,8 @@ Matrix<realT, Row, Col>::Matrix(const Integer& runtime_row, const Integer& runti
 	if (Col_CompileTime != runtime_col)
 		throw std::invalid_argument(
 			"The column size at compile time is not consistent with that at run time.");
+
+	_matrix.fill(0);
 }
 
 
@@ -278,6 +281,7 @@ Matrix<realT, Row, Col>::Matrix(const Integer& runtime_dim) :
 
 	if (runtime_dim <= 0)
 		throw std::invalid_argument("Invalid arguments: row size or column size is not positive.");
+	_matrix.fill(0);
 }
 
 
